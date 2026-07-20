@@ -1,0 +1,58 @@
+{# register.html - new account registration with a role choice. #}
+{% extends "base.html" %}
+
+{% block title %}Register — FIBooking{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <h1 class="fs-3 mb-1">Register</h1>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label" for="username">Codename</label>
+            <input class="form-control" id="username" name="username" type="text"
+                   required maxlength="20" value="{{ request.form.get('username', '') }}">
+            <div class="form-text">Must be unique. 20 characters max.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="password">Cipher</label>
+            <input class="form-control" id="password" name="password" type="password"
+                   required minlength="8">
+            <div class="form-text">At least 8 characters.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="password2">Confirm cipher</label>
+            <input class="form-control" id="password2" name="password2" type="password"
+                   required minlength="8">
+          </div>
+
+          {# Role choice - a failed submit keeps the selection. #}
+          <div class="mb-3">
+            <span class="form-label d-block">Join as</span>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="role" id="role-adventurer"
+                     value="adventurer" {% if request.form.get('role') != 'guild_master' %}checked{% endif %}>
+              <label class="form-check-label" for="role-adventurer">Crew — joins runs</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="role" id="role-guild_master"
+                     value="guild_master" {% if request.form.get('role') == 'guild_master' %}checked{% endif %}>
+              <label class="form-check-label" for="role-guild_master">Mastermind — plans and posts the scores</label>
+            </div>
+          </div>
+
+          {% if error %}
+            <p class="text-danger"><i class="bi bi-exclamation-octagon-fill"></i> {{ error }}</p>
+          {% endif %}
+
+          <button class="btn btn-primary w-100" type="submit">Create account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

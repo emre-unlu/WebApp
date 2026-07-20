@@ -1,0 +1,14 @@
+{# error.html - themed page for HTTP errors (403 and 404).#}
+{% extends "base.html" %}
+
+{% block title %}Error {{ code }} — FIBooking{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="display-3">{{ code }}</h1>
+  <h2 class="fs-4">{% if code == 404 %}File not found{% else %}Access denied{% endif %}</h2>
+  <p class="text-body-secondary">{{ message }}</p>
+  <a class="btn btn-primary" href="{{ url_for('job_board') }}">
+    <i class="bi bi-arrow-left"></i> Back to the board</a>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{# edit_session.html 
+   Only reachable while nobody has joined the run. #}
+{% extends "base.html" %}
+
+{% block title %}Edit Run — FIBooking{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-1">Move Run</h1>
+<p class="text-body-secondary">Edit for the, Quest: {{ s.title |e }} &middot; with code: {{ s.code }}
+ </p>
+
+<div class="row">
+  <div class="col-lg-6">
+    <form method="post" class="card card-body">
+      <div class="row g-3">
+        <div class="col-sm-4">
+          <label class="form-label" for="day">Day</label>
+          <select class="form-select" id="day" name="day" required>
+            {% for name in day_names %}
+              <option value="{{ loop.index0 }}" {% if s.day == loop.index0 %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label" for="start_time">Start</label>
+          <input class="form-control" id="start_time" name="start_time"
+                 type="time" value="{{ s.start_time }}" required>
+        </div>
+        <div class="col-sm-5">
+          <label class="form-label" for="location">Location</label>
+          <select class="form-select" id="location" name="location" required>
+            {% for loc in locations %}
+              <option value="{{ loc }}" {% if s.location == loc %}selected{% endif %}>{{ loc }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      {% if error %}
+        <p class="text-danger mt-3 mb-0"><i class="bi bi-exclamation-octagon-fill"></i> {{ error }}</p>
+      {% endif %}
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary" type="submit">Save changes</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('planner') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

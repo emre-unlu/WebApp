@@ -1,0 +1,110 @@
+/* 1. THE PALETTE*/
+:root {
+  --accent:        #39ff14;   /* money-green neon - the signature color */
+  --accent-dark:   #2ecc0f;   /* hover/pressed shade of the accent      */
+  --ink-on-accent: #0a0a0c;   /* text on top of accent fills            */
+  --night:         #0a0a0c;   /* base background, near black            */
+  --panel:         #16161d;   /* cards and navbar surface               */
+  --line:          #2a2a35;   /* subtle hairline borders                */
+}
+
+/* General dark theme styles */
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--night);
+  --bs-body-color: #e8e8ea;           /* main text  */
+  --bs-secondary-color: #8a8a95;      /* muted text */
+  --bs-tertiary-bg: var(--panel);     /* navbar background  */
+  --bs-border-color: var(--line);
+  --bs-link-color: var(--accent);
+  --bs-link-hover-color: var(--accent-dark);
+  /* Bootstrap anchors */
+  --bs-link-color-rgb: 57, 255, 20;
+  --bs-link-hover-color-rgb: 46, 204, 15;
+}
+
+/* faint planning board grid */
+body {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .015) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+/* cards */
+.card {
+  --bs-card-bg: var(--panel);
+}
+
+/* tables inside cards*/
+.table {
+  --bs-table-bg: transparent;
+}
+
+/* primary buttons */
+.btn-primary {
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-color: var(--ink-on-accent);
+  --bs-btn-hover-bg: var(--accent-dark);
+  --bs-btn-hover-border-color: var(--accent-dark);
+  --bs-btn-hover-color: var(--ink-on-accent);
+  --bs-btn-active-bg: var(--accent-dark);
+  --bs-btn-active-border-color: var(--accent-dark);
+  --bs-btn-active-color: var(--ink-on-accent);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-hover-bg: var(--accent);
+  --bs-btn-hover-border-color: var(--accent);
+  --bs-btn-hover-color: var(--ink-on-accent);
+}
+
+/*2. COMPONENT TOUCHES*/
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+
+h1 {
+  letter-spacing: 1px;
+}
+
+/* gold wanted level stars */
+.stars {
+  color: #f5c518;
+}
+
+/* a locked run*/
+.card-locked {
+  opacity: 0.65;
+}
+
+.card:hover {
+  border-color: var(--bs-secondary-color);
+}
+
+/* a role with no places left */
+.role-full {
+  color: var(--bs-danger);
+  font-weight: 600;
+}
+
+footer {
+  margin-top: 4rem;
+}
+
+/* quest promo images: cropped banner on the board cards, full width in the details page */
+.quest-card-img {
+  height: 150px;
+  object-fit: cover;
+}
+
+.quest-img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--bs-border-radius);
+}

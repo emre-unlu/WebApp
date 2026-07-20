@@ -1,0 +1,164 @@
+{# details.html -
+   anonymous -> sign-in link,
+   guild master -> note, booked
+   adventurer -> change/cancel, else -> join form. #}
+{% extends "base.html" %}
+
+{% block title %}{{ s.title |e }} — FIBooking{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-1">{{ s.title |e }}</h1>
+<p class="text-body-secondary">{{ s.code }} &middot; {{ s.job_type }} &middot;
+  <span class="stars">{%- for i in range(s.difficulty) %}<i class="bi bi-star-fill"></i>{% endfor -%}</span>
+  wanted {{ s.difficulty }}/5 &middot; {{ s.duration_min }} min</p>
+
+<div class="row g-4">
+
+  <!-- LEFT: briefing -->
+  <div class="col-lg-8">
+    <img class="quest-img mb-3"
+         src="{{ url_for('static', filename='img/' + (s.image or 'placeholder.jpg')) }}"
+         alt="Promo shot for {{ s.title }}">
+
+    <h2 class="fs-4">Briefing</h2>
+    <p>{{ s.description |e }}</p>
+
+    <h2 class="fs-4 mt-4">All runs of this heist</h2>
+    <table class="table align-middle">
+      <thead>
+        <tr><th>Day &middot; Time</th><th>Location</th><th>Places left</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in runs %}
+        <tr {% if r.id == s.id %}class="table-active"{% endif %}>
+          <td>{{ r.day_name }} &middot; {{ r.start_time }}</td>
+          <td>{{ r.location }}</td>
+          <td>G {{ r.gunman_left }}/4 &middot; D {{ r.driver_left }}/3 &middot; H {{ r.hacker_left }}/2</td>
+          <td>
+            {% if r.is_locked %}<span class="badge text-bg-danger">Locked</span>
+            {% else %}<span class="badge text-bg-success">Open</span>{% endif %}
+          </td>
+          <td>
+            {% if r.id == s.id %}<small class="text-body-secondary">viewing</small>
+            {% elif not r.is_locked %}
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('details', session_id=r.id) }}">View</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RIGHT: booking panel -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <h2 class="card-title fs-5 mb-0">Book this run</h2>
+          {% if s.is_locked %}<span class="badge text-bg-danger">Locked</span>
+          {% else %}<span class="badge text-bg-success">Open</span>{% endif %}
+        </div>
+
+        <p class="mb-1"><i class="bi bi-calendar-event"></i> {{ s.day_name }} &middot; {{ s.start_time }}</p>
+        <p class="mb-3"><i class="bi bi-geo-alt"></i> {{ s.location }}</p>
+
+        <ul class="list-unstyled">
+          {% for role_name, left, taken in [('Gunman', s.gunman_left, s.gunman_taken),
+                                            ('Driver', s.driver_left, s.driver_taken),
+                                            ('Hacker', s.hacker_left, s.hacker_taken)] %}
+            <li>{{ role_name }}:
+              {% if left == 0 %}<span class="role-full">FULL</span>
+              {% else %}{{ left }} of {{ left + taken }} places left{% endif %}</li>
+          {% endfor %}
+        </ul>
+
+        <hr>
+
+        {# The action area depends on who is looking. #}
+        {% if s.is_locked %}
+
+          <p class="text-body-secondary mb-0"><i class="bi bi-lock-fill"></i>
+            This run is locked — it is full or bookings froze 8 hours before start.</p>
+
+        {% elif not current_user.is_authenticated %}
+
+          <a class="btn btn-primary w-100" href="{{ url_for('login') }}">Sign in to join</a>
+          <p class="mt-2 mb-0"><small>Only registered crew can book a run.</small></p>
+
+        {% elif current_user.role == 'guild_master' %}
+
+          <p class="text-body-secondary mb-0"><i class="bi bi-eye"></i>
+            Masterminds cannot book runs.</p>
+
+        {% elif my_booking %}
+
+          <p>Your booking: <b>{{ my_booking['role'] | capitalize }}</b> &middot;
+            {{ my_booking['places'] }} place{% if my_booking['places'] == 2 %}s{% endif %}</p>
+
+          {% if my_can_modify %}
+            {# Change form: same controls as joining, preset to the booking. #}
+            <form method="post" action="{{ url_for('update_booking', session_id=s.id) }}">
+              <span class="form-label d-block">Change role</span>
+              {% for value, label, left in [('gunman', 'Gunman', s.gunman_left),
+                                            ('driver', 'Driver', s.driver_left),
+                                            ('hacker', 'Hacker', s.hacker_left)] %}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="role-{{ value }}" name="role" value="{{ value }}"
+                         {% if my_booking['role'] == value %}checked{% endif %}
+                         {% if left == 0 and my_booking['role'] != value %}disabled{% endif %}>
+                  <label class="form-check-label" for="role-{{ value }}">{{ label }}</label>
+                </div>
+              {% endfor %}
+
+              <label class="form-label mt-2" for="places">Places</label>
+              <select class="form-select w-auto" id="places" name="places" required>
+                <option value="1" {% if my_booking['places'] == 1 %}selected{% endif %}>1</option>
+                <option value="2" {% if my_booking['places'] == 2 %}selected{% endif %}>2</option>
+              </select>
+
+              <button class="btn btn-primary w-100 mt-3" type="submit">Update booking</button>
+            </form>
+
+            <form method="post" action="{{ url_for('cancel_booking', session_id=s.id) }}" class="mt-2">
+              <button class="btn btn-outline-danger w-100" type="submit">Cancel booking</button>
+            </form>
+          {% else %}
+            <p class="text-body-secondary mb-0"><i class="bi bi-lock-fill"></i>
+              Locked — bookings freeze 8 hours before start.</p>
+          {% endif %}
+
+        {% else %}
+
+          <form method="post" action="{{ url_for('join', session_id=s.id) }}">
+            <span class="form-label d-block">Claim role</span>
+            {% for value, label, left in [('gunman', 'Gunman', s.gunman_left),
+                                          ('driver', 'Driver', s.driver_left),
+                                          ('hacker', 'Hacker', s.hacker_left)] %}
+              <div class="form-check">
+                <input class="form-check-input" type="radio" id="role-{{ value }}" name="role" value="{{ value }}"
+                       {% if left == 0 %}disabled{% else %}required{% endif %}>
+                <label class="form-check-label" for="role-{{ value }}">
+                  {{ label }}{% if left == 0 %} (full){% endif %}</label>
+              </div>
+            {% endfor %}
+
+            <label class="form-label mt-2" for="places">Places</label>
+            <select class="form-select w-auto" id="places" name="places" required>
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+
+            <button class="btn btn-primary w-100 mt-3" type="submit">Join crew</button>
+          </form>
+
+          <p class="mt-2 mb-0"><small>Max 2 places, same role.
+            Bookings freeze 8 hours before start.</small></p>
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

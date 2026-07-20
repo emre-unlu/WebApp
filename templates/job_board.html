@@ -1,0 +1,128 @@
+{# job_board.html -
+   homepage: quick stats, the filter form, and one card per scheduled run #}
+{% extends "base.html" %}
+
+{% block title %}Job Board — FIBooking{% endblock %}
+
+{% block content %}
+<h1 class="mb-1">Job Board</h1>
+<p class="text-body-secondary">Scheduled runs and open slots for the week.</p>
+
+<p>
+  <span class="badge text-bg-success">{{ stats.open }} open</span>
+  <span class="badge text-bg-danger">{{ stats.locked }} locked</span>
+  <span class="badge text-bg-secondary">{{ stats.total }} scheduled this week</span>
+</p>
+
+{# Filter form: plain GET #}
+<form class="row g-2 align-items-end mb-4" method="get">
+  <div class="col-md-2">
+    <label class="form-label" for="f-day">Day</label>
+    <select class="form-select" id="f-day" name="day">
+      <option value="">All days</option>
+      {% for name in day_names %}
+        <option value="{{ loop.index0 }}" {% if filters.day == loop.index0 %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label" for="f-type">Job type</label>
+    <select class="form-select" id="f-type" name="type">
+      <option value="">All types</option>
+      {% for t in job_types %}
+        <option value="{{ t }}" {% if filters.type == t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label" for="f-wanted">Wanted level</label>
+    <select class="form-select" id="f-wanted" name="wanted">
+      <option value="">Any heat</option>
+      {% for v in [2, 3, 4, 5] %}
+        <option value="{{ v }}" {% if filters.wanted == v %}selected{% endif %}>{{ v }}+ stars</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label" for="f-role">Available role</label>
+    <select class="form-select" id="f-role" name="role">
+      <option value="">Any role</option>
+      <option value="gunman" {% if filters.role == 'gunman' %}selected{% endif %}>Gunman</option>
+      <option value="driver" {% if filters.role == 'driver' %}selected{% endif %}>Driver</option>
+      <option value="hacker" {% if filters.role == 'hacker' %}selected{% endif %}>Hacker</option>
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label" for="f-location">Location</label>
+    <select class="form-select" id="f-location" name="location">
+      <option value="">All locations</option>
+      {% for loc in locations %}
+        <option value="{{ loc }}" {% if filters.location == loc %}selected{% endif %}>{{ loc }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-2 d-flex gap-2">
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('job_board') }}">Reset</a>
+  </div>
+</form>
+
+{% if sessions %}
+<div class="row g-4">
+  {% for s in sessions %}
+  <div class="col-lg-4 col-md-6">
+    <div class="card h-100 {% if s.is_locked %}card-locked{% endif %}">
+      <img class="card-img-top quest-card-img"
+           src="{{ url_for('static', filename='img/' + (s.image or 'placeholder.jpg')) }}"
+           alt="Promo shot for {{ s.title }}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="badge text-bg-secondary">{{ s.job_type }}</span>
+          {% if s.is_locked %}
+            <span class="badge text-bg-danger">Locked</span>
+          {% else %}
+            <span class="badge text-bg-success">Open</span>
+          {% endif %}
+        </div>
+
+        <h2 class="card-title fs-5 mb-1">{{ s.title |e }}</h2>
+        <p class="text-body-secondary mb-2"><small>{{ s.code }}</small></p>
+
+        <p class="mb-1"><i class="bi bi-clock"></i> {{ s.day_name }} &middot; {{ s.start_time }} &middot; {{ s.duration_min }} min</p>
+        <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ s.location }}</p>
+        <p class="mb-2"><span class="stars">
+          {%- for i in range(s.difficulty) %}<i class="bi bi-star-fill"></i>{% endfor -%}
+          </span> wanted {{ s.difficulty }}/5</p>
+
+        <ul class="list-unstyled mb-0">
+          {% for role_name, left, taken in [('Gunman', s.gunman_left, s.gunman_taken),
+                                            ('Driver', s.driver_left, s.driver_taken),
+                                            ('Hacker', s.hacker_left, s.hacker_taken)] %}
+            <li>{{ role_name }}:
+              {% if left == 0 %}<span class="role-full">FULL</span>
+              {% else %}{{ left }} of {{ left + taken }} places left{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <small>{{ s.open_slots }} slots open</small>
+        {% if s.is_locked %}
+          <span class="btn btn-sm btn-outline-secondary disabled">Locked</span>
+        {% else %}
+          <a class="btn btn-sm btn-primary" href="{{ url_for('details', session_id=s.id) }}">View</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p>No runs match these filters.</p>
+{% endif %}
+{% endblock %}

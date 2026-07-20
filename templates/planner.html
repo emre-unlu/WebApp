@@ -1,0 +1,83 @@
+{# planner.html - the Guild Masters console: one card per heist with a table
+   of its runs. open edit and cancel on "no adventurer
+   has joined"#}
+{% extends "base.html" %}
+
+{% block title %}The Planner — FIBooking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-1">
+  <h1 class="mb-0">The Planner</h1>
+  <a class="btn btn-primary" href="{{ url_for('new_score') }}"><i class="bi bi-plus-lg"></i> New Score</a>
+</div>
+<p class="text-body-secondary">Every heist you posted and its scheduled runs.</p>
+
+<p>
+  <span class="badge text-bg-secondary">{{ stats.quests }} heists</span>
+  <span class="badge text-bg-secondary">{{ stats.runs }} runs</span>
+  <span class="badge text-bg-success">{{ stats.open }} open</span>
+  <span class="badge text-bg-danger">{{ stats.locked }} locked</span>
+  <span class="badge text-bg-secondary">{{ stats.reserved }} places reserved</span>
+</p>
+
+<h2 class="fs-4 mt-4">Active Heists</h2>
+
+{% if groups %}
+  {% for g in groups %}
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <b>{{ g.quest.title |e }}</b>
+        <span class="text-body-secondary">{{ g.quest.code }}</span>
+        <span class="badge text-bg-secondary">{{ g.quest.job_type }}</span>
+        <span class="stars">
+          {%- for i in range(g.quest.difficulty) %}<i class="bi bi-star-fill"></i>{% endfor -%}
+        </span>
+      </div>
+      <small>{{ g.runs | length }} run{% if g.runs | length != 1 %}s{% endif %} &middot; {{ g.open_count }} open</small>
+    </div>
+
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Day &middot; Time</th><th>Location</th>
+          <th>Reserved</th><th>Places left</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in g.runs %}
+        <tr>
+          <td>{{ r.day_name }} &middot; {{ r.start_time }}</td>
+          <td>{{ r.location }}</td>
+          <td>
+            {% if r.reserved_total == 0 %}
+              <span class="text-body-secondary">no bookings yet</span>
+            {% else %}
+              {{ r.reserved_total }} place{% if r.reserved_total != 1 %}s{% endif %}
+              {% if r.top_role %} &middot; top: {{ r.top_role }}{% endif %}
+            {% endif %}
+          </td>
+          <td>
+            G {{ r.gunman_left }}/4 &middot; D {{ r.driver_left }}/3 &middot; H {{ r.hacker_left }}/2
+            {% if r.open_slots == 0 %} <span class="role-full">FULL</span>{% endif %}
+          </td>
+          <td>
+            {% if r.can_edit %}
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit_session', session_id=r.id) }}">Edit</a>
+              <form class="d-inline" method="post" action="{{ url_for('cancel_session', session_id=r.id) }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button>
+              </form>
+            {% else %}
+              <small class="text-body-secondary" title="Adventurers already joined">locked</small>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+{% else %}
+  <p>No heists yet. <a href="{{ url_for('new_score') }}">Post your first score</a>.</p>
+{% endif %}
+{% endblock %}

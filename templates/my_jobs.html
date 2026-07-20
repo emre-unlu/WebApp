@@ -1,0 +1,54 @@
+{# my_jobs.html - the adventurer's profile: runs
+   inside the 8-hour freeze are shown locked. #}
+{% extends "base.html" %}
+
+{% block title %}My Jobs — FIBooking{% endblock %}
+
+{% block content %}
+<h1 class="mb-1">My Jobs</h1>
+<p class="text-body-secondary">@{{ current_user.username }} —  booked runs this week.</p>
+
+<p>
+  <span class="badge text-bg-success">{{ bookings | length }} booked</span>
+  <span class="badge text-bg-danger">{{ locked_count }} locked</span>
+  <span class="badge text-bg-secondary">{{ places_total }} places reserved</span>
+</p>
+
+{% if bookings %}
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>Heist</th><th>Day &middot; Time</th><th>Location</th>
+      <th>Role</th><th>Places</th><th>Status</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in bookings %}
+    <tr>
+      <td>{{ b.title |e }}<br><small class="text-body-secondary">{{ b.code }}</small></td>
+      <td>{{ b.day_name }} &middot; {{ b.start_time }}</td>
+      <td>{{ b.location }}</td>
+      <td>{{ b.role | capitalize }}</td>
+      <td>{{ b.places }}</td>
+      <td>
+        {% if b.can_modify %}<span class="badge text-bg-success">Open</span>
+        {% else %}<span class="badge text-bg-danger">Locked</span>{% endif %}
+      </td>
+      <td>
+        {% if b.can_modify %}
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('details', session_id=b.session_id) }}">Change</a>
+          <form class="d-inline" method="post" action="{{ url_for('cancel_booking', session_id=b.session_id) }}">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button>
+          </form>
+        {% else %}
+          <small class="text-body-secondary">frozen</small>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p>No runs booked yet. <a href="{{ url_for('job_board') }}">Pick a job from the board</a>.</p>
+{% endif %}
+{% endblock %}

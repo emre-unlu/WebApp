@@ -1,0 +1,156 @@
+{# new_score.html - Guild Master creates a heist #}
+{% extends "base.html" %}
+
+{% block title %}New Score — FIBooking{% endblock %}
+
+{% block content %}
+
+<h1 class="mb-1">New Score</h1>
+
+{# A refused submit re-renders here, at the top, where it is seen first. #}
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post">
+
+  <div class="card mb-4">
+    <div class="card-header">A &middot; Heist details</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="title">Heist title</label>
+          <input class="form-control" id="title" name="title" type="text"
+                 required maxlength="80" value="{{ request.form.get('title', '') }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="duration">Duration (min)</label>
+          <input class="form-control" id="duration" name="duration" type="number"
+                 min="1" max="600" step="1" required
+                 value="{{ request.form.get('duration', '45') }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="job_type">Job type</label>
+          <select class="form-select" id="job_type" name="job_type" required>
+            {% for t in job_types %}
+              <option value="{{ t }}" {% if request.form.get('job_type') == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="difficulty">Wanted level</label>
+          {% set picked = request.form.get('difficulty', '4') %}
+          <select class="form-select" id="difficulty" name="difficulty" required>
+            {% for v in ['2', '3', '4', '5'] %}
+              <option value="{{ v }}" {% if picked == v %}selected{% endif %}>{{ v }} stars</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label" for="image">Promo image</label>
+          <select class="form-select" id="image" name="image">
+            <option value="">No image (use placeholder)</option>
+            {% for img in images %}
+              <option value="{{ img }}" {% if request.form.get('image') == img %}selected{% endif %}>{{ img }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" for="description">Briefing</label>
+          <textarea class="form-control" id="description" name="description" rows="4" required
+                    placeholder="The briefing for the quest.">{{ request.form.get('description', '') }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">B &middot; Schedule runs, one row per run, one run per location at a time</div>
+    <div class="card-body">
+      <div id="run-list">
+        {% for r in runs_input %}
+        <div class="row g-2 align-items-end mb-2 run-row">
+          <div class="col-md-1">
+            <span class="form-text run-label">RUN</span>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Day</label>
+            <select class="form-select" name="day" required>
+              <option value="" disabled {% if r.day == '' %}selected{% endif %}>Pick…</option>
+              {% for name in day_names %}
+                <option value="{{ loop.index0 }}" {% if r.day == loop.index0 | string %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Start</label>
+            <input class="form-control" name="start_time" type="time" required value="{{ r.start_time }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Location</label>
+            <select class="form-select" name="location" required>
+              <option value="" disabled {% if r.location == '' %}selected{% endif %}>Pick…</option>
+              {% for loc in locations %}
+                <option value="{{ loc }}" {% if r.location == loc %}selected{% endif %}>{{ loc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-outline-danger remove-run" type="button" aria-label="Remove this run">
+              <i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <button class="btn btn-outline-secondary btn-sm" type="button" id="add-run">
+        <i class="bi bi-plus-lg"></i> Add another run</button>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 justify-content-end">
+    <a class="btn btn-outline-secondary" href="{{ url_for('planner') }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">Create Score</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ---- Run rows: add / remove ---------------------------------------------
+  // "Add another run" clones the first row (with cleared inputs). The trash
+  // button removes its row, but the last remaining row always stays.
+  const runList = document.getElementById("run-list");
+
+  function renumberRows() {
+    const rows = runList.querySelectorAll(".run-row");
+    rows.forEach(function (row, index) {
+      // RUN A, RUN B, ... 65 is the character code of "A".
+      row.querySelector(".run-label").textContent = "RUN " + String.fromCharCode(65 + index);
+    });
+  }
+
+  document.getElementById("add-run").addEventListener("click", function () {
+    const firstRow = runList.querySelector(".run-row");
+    const newRow = firstRow.cloneNode(true);
+    newRow.querySelectorAll("select").forEach(function (s) { s.selectedIndex = 0; });
+    newRow.querySelector("input[type=time]").value = "";
+    runList.appendChild(newRow);
+    renumberRows();
+  });
+
+  runList.addEventListener("click", function (event) {
+    const removeButton = event.target.closest(".remove-run");
+    if (removeButton && runList.querySelectorAll(".run-row").length > 1) {
+      removeButton.closest(".run-row").remove();
+      renumberRows();
+    }
+  });
+  renumberRows();
+</script>
+{% endblock %}
